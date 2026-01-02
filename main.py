@@ -43,38 +43,11 @@ def carica_cronologia():
         return f.read().splitlines()
 
 def salva_in_cronologia(id_gioco):
-    """Salva l'ID del gioco per non inviarlo più in futuro"""
+    """Salva l'ID del gioco nel file locale"""
     with open(FILE_MEMORIA, "a") as f:
         f.write(f"{id_gioco}\n")
 
 if __name__ == "__main__":
     if not TOKEN_TELEGRAM or not CHAT_ID:
-        print("ERRORE: Configura TOKEN_TELEGRAM e CHAT_ID nei Secrets di GitHub!")
+        print("ERRORE: Configura TOKEN_TELEGRAM e CHAT_ID nei Secrets!")
     else:
-        print("Inizio scansione nuovi giochi...")
-        giochi = ottieni_giochi_gratis()
-        visti = carica_cronologia()
-        nuovi_trovati = 0
-
-        for gioco in giochi:
-            id_gioco = str(gioco['id'])
-            
-            # Controllo memoria: invia solo se non è già stato postato
-            if id_gioco not in visti:
-                messaggio = (
-                    f"🎁 *NUOVO GIOCO GRATIS!*\n\n"
-                    f"🕹 *{gioco['title']}*\n"
-                    f"💻 Piattaforma: {gioco['platforms']}\n"
-                    f"💰 Valore: {gioco['worth']}\n\n"
-                    f"🔗 [Riscatta qui]({gioco['open_giveaway_url']})"
-                )
-                
-                # Otteniamo l'immagine del gioco
-                url_immagine = gioco.get('image', '')
-                
-                invia_gioco_con_foto(messaggio, url_immagine)
-                salva_in_cronologia(id_gioco)
-                nuovi_trovati += 1
-                
-                # Pausa per evitare blocchi da Telegram
-                time
