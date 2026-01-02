@@ -1,0 +1,19 @@
+name: Bot-Giochi
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 10 * * *'
+jobs:
+  job-bot:
+    runs_on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install requests
+      - name: Esegui
+        env:
+          TOKEN_TELEGRAM: ${{ secrets.TOKEN_TELEGRAM }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python main.py
