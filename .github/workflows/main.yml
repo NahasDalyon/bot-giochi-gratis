@@ -1,29 +1,26 @@
-name: Cacciatore di Giochi Gratis
+name: Bot Giochi Gratis
 
 on:
   schedule:
-    # Esegue il bot ogni giorno alle 10:00 UTC (che sono le 11:00 o 12:00 in Italia)
     - cron: '0 10 * * *'
-  workflow_dispatch: # Ti permette di avviarlo a mano per testarlo
+  workflow_dispatch:
 
 jobs:
   build:
     runs_on: ubuntu-latest
-
     steps:
-      - name: Scarica il codice
+      - name: Checkout codice
         uses: actions/checkout@v3
 
-      - name: Installa Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Installa librerie
-        run: |
-          pip install -r requirements.txt
+      - name: Installazione librerie
+        run: pip install requests
 
-      - name: Esegui il Bot
+      - name: Esecuzione Bot
         env:
           TOKEN_TELEGRAM: ${{ secrets.TOKEN_TELEGRAM }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
