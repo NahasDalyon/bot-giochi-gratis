@@ -61,7 +61,8 @@ if __name__ == "__main__":
                 nuovi_trovati += 1
 # Riga da aggiungere in fondo al file main.py per testare la connessione
 invia_telegram("Test di connessione: Il bot è online!", "https://google.com")
-                time.sleep(1) 
+time.sleep(1) 
                 if nuovi_trovati >= 5: break # Limite per evitare spam
+
 
 
