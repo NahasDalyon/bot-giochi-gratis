@@ -10,7 +10,7 @@ CHAT_ID = os.getenv("CHAT_ID")
 FILE_MEMORIA = "giochi_visti.txt"
 
 def ottieni_giochi_gratis():
-    url = "https://www.gamerpower.com/api/giveaways?type=game&platform=pc"
+    url = "https://www.gamerpower.com/api/giveaways?type=game&platform=all"
     try:
         risposta = requests.get(url)
         if risposta.status_code == 200:
@@ -61,3 +61,4 @@ if __name__ == "__main__":
                 nuovi_trovati += 1
                 time.sleep(1) 
                 if nuovi_trovati >= 5: break # Limite per evitare spam
+
