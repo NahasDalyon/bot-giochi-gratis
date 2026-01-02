@@ -17,23 +17,26 @@ def ottieni_giochi_gratis():
 def invia_gioco_con_foto(testo, url_foto):
     url = f"https://api.telegram.org/bot{TOKEN_TELEGRAM}/sendPhoto"
     dati = {"chat_id": CHAT_ID, "photo": url_foto, "caption": testo, "parse_mode": "Markdown"}
-    requests.post(url, data=dati)
-
-def carica_cronologia():
-    if not os.path.exists(FILE_MEMORIA): return []
-    with open(FILE_MEMORIA, "r") as f: return f.read().splitlines()
-
-def salva_in_cronologia(id_gioco):
-    with open(FILE_MEMORIA, "a") as f: f.write(f"{id_gioco}\n")
+    r = requests.post(url, data=dati)
+    print(f"DEBUG Invio Foto: {r.status_code} - {r.text}")
 
 if __name__ == "__main__":
-    if TOKEN_TELEGRAM and CHAT_ID:
+    if not TOKEN_TELEGRAM or not CHAT_ID:
+        print("ERRORE: Secrets mancanti!")
+    else:
+        # --- TEST DI CONNESSIONE DIRETTO ---
+        print(f"DEBUG: Provo invio a CHAT_ID: {CHAT_ID}")
+        url_test = f"https://api.telegram.org/bot{TOKEN_TELEGRAM}/sendMessage"
+        r_test = requests.post(url_test, data={"chat_id": CHAT_ID, "text": "🤖 Test connessione: il bot sta provando a scrivere!"})
+        print(f"DEBUG Risposta Test Testo: {r_test.status_code} - {r_test.text}")
+        
+        # --- PROCESSO GIOCHI ---
         giochi = ottieni_giochi_gratis()
-        visti = carica_cronologia()
-        for gioco in giochi:
-            id_gioco = str(gioco['id'])
-            if True: # Forza l'invio per il test
-                msg = f"🎁 *GIOCO GRATIS!*\n\n🕹 *{gioco['title']}*\n💻 {gioco['platforms']}\n\n🔗 [Riscatta qui]({gioco['open_giveaway_url']})"
+        if giochi:
+            # Ne prendiamo solo 2 per il test per non intasare
+            for gioco in giochi[:2]:
+                msg = f"🎁 *TEST FOTO*\n🕹 *{gioco['title']}*\n🔗 [Link]({gioco['open_giveaway_url']})"
                 invia_gioco_con_foto(msg, gioco.get('image', ''))
-                salva_in_cronologia(id_gioco)
                 time.sleep(2)
+        else:
+            print("DEBUG: Nessun gioco trovato dalle API.")
