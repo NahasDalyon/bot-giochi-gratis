@@ -3,8 +3,6 @@ import os
 import time
 
 # --- CONFIGURAZIONE SICURA ---
-# Il bot proverà a leggere i dati dai Secrets di GitHub. 
-# Se non li trova (ad esempio se lo lanci sul PC), darà un errore invece di fallire silenziosamente.
 TOKEN_TELEGRAM = os.getenv("TOKEN_TELEGRAM")
 CHAT_ID = os.getenv("CHAT_ID")
 FILE_MEMORIA = "giochi_visti.txt"
@@ -25,7 +23,8 @@ def invia_messaggio(testo):
     dati = {
         "chat_id": CHAT_ID,
         "text": testo,
-        "parse_mode": "Markdown"
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": False
     }
     requests.post(url, data=dati)
 
@@ -43,6 +42,9 @@ if __name__ == "__main__":
     if not TOKEN_TELEGRAM or not CHAT_ID:
         print("ERRORE: Token o Chat ID mancanti nei Secrets di GitHub!")
     else:
+        # TEST DI CONNESSIONE: Invia un messaggio appena parte
+        invia_messaggio("🚀 *Il bot è partito correttamente!* Sto cercando nuovi giochi...")
+        
         giochi = ottieni_giochi_gratis()
         visti = carica_cronologia()
         nuovi_trovati = 0
@@ -59,5 +61,6 @@ if __name__ == "__main__":
                 invia_messaggio(messaggio)
                 salva_in_cronologia(id_gioco)
                 nuovi_trovati += 1
-                # Riga da aggiungere in fondo al file main.py per testare la connessione
-invia_telegram("Test di connessione: Il bot è online!", "https://google.com")
+                time.sleep(1) # Aspetta 1 secondo tra un invio e l'altro
+
+        print(f"Lavoro terminato. Nuovi giochi inviati: {nuovi_trovati}")
