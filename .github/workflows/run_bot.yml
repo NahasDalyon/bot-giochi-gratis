@@ -1,27 +1,35 @@
 name: Game Bot Cron
+
 on:
   schedule:
-    - cron: '0 * * * *' # Gira ogni ora
-  workflow_dispatch: # Permette l'avvio manuale
+    - cron: '0 * * * *'  # Esegue il bot ogni ora
+  workflow_dispatch:      # Permette l'avvio manuale per i test
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codice
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install dipendenze
         run: pip install requests
+
       - name: Esegui Bot
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python bot.py
-      - name: Salva modifiche al file di testo
+
+      - name: Salva modifiche al database
         run: |
-          git config --global user.name 'GameBot'
-          git config --global user.email 'bot@noreply.github.com'
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add sent_games.txt
-          git commit -m "Update sent games list" || exit 0
+          git commit -m "Aggiornato elenco giochi inviati" || exit 0
           git push
