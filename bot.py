@@ -1,68 +1,85 @@
 import requests
 import os
 
-# --- CONFIGURAZIONE ---
-TOKEN = "IL_TUO_BOT_TOKEN_QUI"
-CHAT_ID = "@IL_TUO_CANALE"  # oppure l'ID numerico
+# --- CONFIGURAZIONE TRAMITE GITHUB SECRETS ---
+# os.getenv legge i valori che hai inserito nei Secrets di GitHub
+TOKEN = os.getenv("TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 API_URL = "https://www.gamerpower.com/api/giveaways"
 DB_FILE = "sent_games.txt"
 
 def get_sent_games():
-    """Legge i giochi già inviati dal file di testo."""
+    """Legge i giochi già inviati dal file di testo per evitare duplicati."""
     if not os.path.exists(DB_FILE):
         return []
     with open(DB_FILE, "r") as f:
-        return f.read().splitlines()
+        # Legge riga per riga e rimuove eventuali spazi bianchi o invii
+        return [line.strip() for line in f.readlines() if line.strip()]
 
 def save_sent_game(game_id):
-    """Salva l'ID del gioco inviato nel file di testo."""
+    """Aggiunge l'ID del gioco appena inviato al file di testo."""
     with open(DB_FILE, "a") as f:
         f.write(f"{game_id}\n")
 
 def send_telegram_message(message):
-    """Invia il messaggio al canale Telegram."""
+    """Invia il messaggio formattato in HTML al canale Telegram."""
+    if not TOKEN or not CHAT_ID:
+        print("ERRORE: TOKEN o CHAT_ID non trovati nei Secrets!")
+        return
+
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {
         "chat_id": CHAT_ID,
         "text": message,
-        "parse_mode": "HTML" # Usiamo HTML per una formattazione più bella
+        "parse_mode": "HTML",
+        "disable_web_page_preview": False # Mostra l'anteprima del link
     }
+    
     try:
-        requests.post(url, data=payload)
+        response = requests.post(url, data=payload)
+        response.raise_for_status() # Genera un errore se la chiamata fallisce
+        print("Messaggio inviato con successo!")
     except Exception as e:
-        print(f"Errore invio Telegram: {e}")
+        print(f"Errore durante l'invio a Telegram: {e}")
 
 def check_for_games():
-    """Controlla i giochi e invia notifiche se sono nuovi."""
+    """Controlla l'API dei giochi e invia notifiche per quelli nuovi."""
+    print("Controllo nuovi giochi in corso...")
     sent_games = get_sent_games()
     
-    response = requests.get(API_URL)
-    if response.status_code != 200:
-        print("Errore nel recupero dati dall'API")
+    try:
+        response = requests.get(API_URL)
+        response.raise_for_status()
+        games = response.json()
+    except Exception as e:
+        print(f"Errore nel recupero dati dall'API: {e}")
         return
 
-    games = response.json()
-    
-    # Controlliamo gli ultimi 10 giochi per sicurezza
-    for game in games[:10]:
+    # Controlliamo gli ultimi 15 giochi caricati dall'API
+    # Invertiamo la lista per inviare prima i più "vecchi" tra i nuovi
+    new_found = 0
+    for game in reversed(games[:15]):
         game_id = str(game['id'])
         
         if game_id not in sent_games:
-            # Costruzione del messaggio
+            # Creazione messaggio con formattazione HTML
             msg = (
-                f"🎮 <b>GIOCO GRATIS DISPONIBILE!</b>\n\n"
-                f"🕹 <b>Titolo:</b> {game['title']}\n"
-                f"🎰 <b>Piattaforma:</b> {game['platforms']}\n"
-                f"💰 <b>Valore:</b> {game['worth']}\n"
-                f"📝 <b>Tipo:</b> {game['type']}\n\n"
-                f"🔗 <a href='{game['open_giveaway_url']}'>CLICCA QUI PER RISCATTARE</a>"
+                f"🎮 <b>NUOVO GIOCO GRATIS!</b>\n\n"
+                f"<b>Titolo:</b> {game['title']}\n"
+                f"<b>Piattaforma:</b> {game['platforms']}\n"
+                f"<b>Valore:</b> <s>{game['worth']}</s> ⮕ <b>GRATIS</b>\n"
+                f"<b>Tipo:</b> {game['type']}\n\n"
+                f"🔗 <a href='{game['open_giveaway_url']}'>RISCATTA ORA</a>"
             )
             
-            print(f"Inviando: {game['title']}")
             send_telegram_message(msg)
             save_sent_game(game_id)
-        else:
-            print(f"Gioco già inviato: {game['title']}")
+            new_found += 1
+        
+    if new_found == 0:
+        print("Nessun nuovo gioco trovato.")
+    else:
+        print(f"Operazione completata: inviati {new_found} nuovi giochi.")
 
 if __name__ == "__main__":
     check_for_games()
