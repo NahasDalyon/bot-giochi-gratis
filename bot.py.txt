@@ -1,0 +1,68 @@
+import requests
+import os
+
+# --- CONFIGURAZIONE ---
+TOKEN = "IL_TUO_BOT_TOKEN_QUI"
+CHAT_ID = "@IL_TUO_CANALE"  # oppure l'ID numerico
+API_URL = "https://www.gamerpower.com/api/giveaways"
+DB_FILE = "sent_games.txt"
+
+def get_sent_games():
+    """Legge i giochi già inviati dal file di testo."""
+    if not os.path.exists(DB_FILE):
+        return []
+    with open(DB_FILE, "r") as f:
+        return f.read().splitlines()
+
+def save_sent_game(game_id):
+    """Salva l'ID del gioco inviato nel file di testo."""
+    with open(DB_FILE, "a") as f:
+        f.write(f"{game_id}\n")
+
+def send_telegram_message(message):
+    """Invia il messaggio al canale Telegram."""
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    payload = {
+        "chat_id": CHAT_ID,
+        "text": message,
+        "parse_mode": "HTML" # Usiamo HTML per una formattazione più bella
+    }
+    try:
+        requests.post(url, data=payload)
+    except Exception as e:
+        print(f"Errore invio Telegram: {e}")
+
+def check_for_games():
+    """Controlla i giochi e invia notifiche se sono nuovi."""
+    sent_games = get_sent_games()
+    
+    response = requests.get(API_URL)
+    if response.status_code != 200:
+        print("Errore nel recupero dati dall'API")
+        return
+
+    games = response.json()
+    
+    # Controlliamo gli ultimi 10 giochi per sicurezza
+    for game in games[:10]:
+        game_id = str(game['id'])
+        
+        if game_id not in sent_games:
+            # Costruzione del messaggio
+            msg = (
+                f"🎮 <b>GIOCO GRATIS DISPONIBILE!</b>\n\n"
+                f"🕹 <b>Titolo:</b> {game['title']}\n"
+                f"🎰 <b>Piattaforma:</b> {game['platforms']}\n"
+                f"💰 <b>Valore:</b> {game['worth']}\n"
+                f"📝 <b>Tipo:</b> {game['type']}\n\n"
+                f"🔗 <a href='{game['open_giveaway_url']}'>CLICCA QUI PER RISCATTARE</a>"
+            )
+            
+            print(f"Inviando: {game['title']}")
+            send_telegram_message(msg)
+            save_sent_game(game_id)
+        else:
+            print(f"Gioco già inviato: {game['title']}")
+
+if __name__ == "__main__":
+    check_for_games()
