@@ -2,8 +2,9 @@ name: Game Bot Cron
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Esegue il bot ogni ora
-  workflow_dispatch:      # Permette l'avvio manuale per i test
+    # Esegue il bot ogni giorno alle 10:00 del mattino (UTC)
+    - cron: '0 10 * * *'
+  workflow_dispatch:      # Ti permette di avviarlo a mano quando vuoi per testare
 
 jobs:
   build:
@@ -31,5 +32,5 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add sent_games.txt
-          git commit -m "Aggiornato elenco giochi inviati" || exit 0
+          git commit -m "Update database: sent games list" || exit 0
           git push
