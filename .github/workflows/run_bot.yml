@@ -4,7 +4,7 @@ on:
   schedule:
     # Esegue il bot ogni giorno alle 10:00 del mattino (UTC)
     - cron: '0 10 * * *'
-  workflow_dispatch:      # Ti permette di avviarlo a mano quando vuoi per testare
+  workflow_dispatch:      # Ti permette di avviarlo manualmente per i test
 
 jobs:
   build:
@@ -25,6 +25,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+          MY_PERSONAL_ID: ${{ secrets.MY_PERSONAL_ID }}
         run: python bot.py
 
       - name: Salva modifiche al database
