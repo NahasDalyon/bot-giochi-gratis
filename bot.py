@@ -1,8 +1,10 @@
 import requests
 import os
 
+# Secrets da GitHub
 TOKEN = os.getenv("TOKEN")
-CHAT_ID = os.getenv("CHAT_ID")
+CHAT_ID = os.getenv("CHAT_ID")           # Il tuo canale
+PERSONAL_ID = os.getenv("MY_PERSONAL_ID") # Il tuo ID privato
 API_URL = "https://www.gamerpower.com/api/giveaways"
 DB_FILE = "sent_games.txt"
 
@@ -16,20 +18,18 @@ def save_sent_game(game_id):
     with open(DB_FILE, "a") as f:
         f.write(f"{game_id}\n")
 
-def send_telegram_message(message, silent=False):
-    """Invia il messaggio. Se silent=True, non fa suonare il telefono."""
-    if not TOKEN or not CHAT_ID:
-        print("ERRORE: Secrets mancanti!")
+def send_telegram_message(message, target, silent=False):
+    """Invia un messaggio a un target specifico (canale o utente)."""
+    if not TOKEN or not target:
         return
 
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {
-        "chat_id": CHAT_ID,
+        "chat_id": target,
         "text": message,
         "parse_mode": "HTML",
-        "disable_notification": silent  # <-- Questa è la chiave per il silenzio
+        "disable_notification": silent
     }
-    
     try:
         requests.post(url, data=payload)
     except Exception as e:
@@ -43,7 +43,7 @@ def check_for_games():
         response = requests.get(API_URL)
         games = response.json()
     except Exception as e:
-        print(f"Errore API: {e}")
+        send_telegram_message(f"❌ Errore API: {e}", PERSONAL_ID)
         return
 
     new_found = 0
@@ -57,17 +57,15 @@ def check_for_games():
                 f"<b>Piattaforma:</b> {game['platforms']}\n"
                 f"🔗 <a href='{game['open_giveaway_url']}'>RISCATTA ORA</a>"
             )
-            send_telegram_message(msg, silent=False) # Notifica sonora per i giochi
+            # Invia al CANALE con suono
+            send_telegram_message(msg, CHAT_ID, silent=False)
             save_sent_game(game_id)
             new_found += 1
-        
-    if new_found == 0:
-        # Messaggio di stato SILENZIOSO (non disturba gli utenti)
-        status_msg = "🤖 <b>Status:</b> Controllo completato. Nessun nuovo gioco oggi, ma io sono attivo!"
-        send_telegram_message(status_msg, silent=True) 
-        print("Nessun nuovo gioco. Notifica di stato inviata.")
-    else:
-        print(f"Inviati {new_found} nuovi giochi.")
+    
+    # INVIA LO STATUS SOLO A TE (Privato e Silenzioso)
+    status_text = f"🤖 <b>Bot Status:</b> Eseguito con successo.\nNuovi giochi inviati: {new_found}"
+    send_telegram_message(status_text, PERSONAL_ID, silent=True)
+    print("Log inviato privatamente.")
 
 if __name__ == "__main__":
     check_for_games()
