@@ -2,19 +2,18 @@ name: Game Bot Cron
 
 on:
   schedule:
-    # Esegue il bot ogni giorno alle 10:00 del mattino (UTC)
-    - cron: '0 10 * * *'
-  workflow_dispatch:      # Ti permette di avviarlo manualmente per i test
+    - cron: '30 10 * * *'  # Gira ogni giorno alle 10:30 UTC (11:30 italiane)
+  workflow_dispatch:      # Mantiene il tasto per l'avvio manuale
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout codice
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Versione aggiornata
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Versione aggiornata
         with:
           python-version: '3.9'
 
